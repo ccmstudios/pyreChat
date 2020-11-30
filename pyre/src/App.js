@@ -6,6 +6,8 @@ import 'firebase/firestore';
 import 'firebase/auth';
 
 
+
+
 import {useAuthState} from 'react-firebase-hooks/auth';
 import { useCollectionData} from 'react-firebase-hooks/firestore';
 
@@ -28,7 +30,9 @@ function App() {
   return (
     <div className="App">
       <header>
-
+<SignOut/>
+<h1>Welcome to Pyre Chat</h1>
+<p>Pyre Chat is a place where you can promote yourself, network with others, or simply lurk for fun!</p>
       </header>
       <section>
         {user ? <ChatRoom /> : <SignIn />}
@@ -41,24 +45,27 @@ function SignIn(){
     
       const provider =new firebase.auth.GoogleAuthProvider();
       auth.signInWithPopup(provider);
-  }
-  
-          return(
-          <button onClick={signInWithGoogle}>Sign In with Google</button>
-          )
+    }
+        return(
+        <button onClick={signInWithGoogle}>Sign In with Google</button>
+        )
       }
+      
       function SignOut(){
-          return auth.currentUser && (
-              <button onClick={() => auth.SignOut()}>Sign Out</button>
-          )
+        console.log("SignOut")
+        return auth.currentUser && (
+            <button onClick={() => auth.signOut()}>Sign Out</button>
+            )
       };
+  SignOut();
   
       function ChatRoom(){
 
         const dummy = useRef();
         const messagesRef= firestore.collection('messages');
         const query = messagesRef.orderBy('createdAt').limit(25);
-        const [ formValue, setFormValue ] = useState('');
+        const[messages]=useCollectionData(query, {idField: 'id'});
+        const [formValue, setFormValue ] = useState('');
 
 const sendMessage = async(e) => {
   e.preventDefault();
@@ -74,17 +81,16 @@ setFormValue('');
 dummy.current.scrollIntoView({behavior: 'smooth'});
 }
 
-        const[messages]=useCollectionData(query, {idField: 'id'});
         return(
           <>
           <main>
-          {messages && messages.map(msg=> <ChatMessage key={msg.id} message = {msg}/>)}
+          {messages && messages.map(msg=> <ChatMessage key={msg.id} message={msg}/>)}
           
-          <div ref={dummy}> </div>
+          <span ref={dummy}> </span>
           </main>
         <form onSubmit={sendMessage}>
-<input value={formValue} onChange={(e) => setFormValue(e.target.value)}/>
-<button type ='submit'>Send</button>
+<input value={formValue} onChange={(e) => setFormValue(e.target.value)} placeholder="Talk to me"/>
+<button type ="submit" disabled={!formValue}>Submit</button>
         </form>
         </>
         )
@@ -94,13 +100,15 @@ dummy.current.scrollIntoView({behavior: 'smooth'});
             function ChatMessage(props){
               const {text, uid, photoURL} = props.message;
 
-              const messageClass = uid === auth.currentUser.uid ? 'sent' : 'received';
-              return (
+              const messageClass = uid === auth.currentUser.uid ? `sent` : `received`;
+              console.log("It WOrks")
+              return (<>
               <div className={`message ${messageClass}`}>
-<img src={photoURL}/>
+<img src={photoURL} alt='Profile Pic'/>
                 <p>{text}</p>
 
               </div>
+              </>
               )
           }
     
